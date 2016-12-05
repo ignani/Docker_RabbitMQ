@@ -5,9 +5,9 @@ using RabbitMQ.Client;
 namespace WorkQueuesSend
 {
    /// <summary>
-   ///    Hello World project has been modified here. User can send the message as a parameter.
-   ///    The number of .(dots) at the end of the message determines the number of seconds the threat has to put to sleep.
-   ///   The queue name and the routing key name should be the same since we are using the default exchange.
+   ///    WorkQueuesSend project is modified in this version.
+   ///   By setting the property of queue durable to true and the message property to persist, we are making sure that
+   ///   the message doesn't get lost if the consumer goes down without sending the acknowledgment.
    /// </summary>
    internal class Program
    {
@@ -17,7 +17,12 @@ namespace WorkQueuesSend
          using (var connection = factory.CreateConnection())
          using (var channel = connection.CreateModel())
          {
-            channel.QueueDeclare("task_queue", false, false, false, null);
+            //channel.QueueDeclare("task_queue", false, false, false, null);
+            channel.QueueDeclare(queue: "task_queue",
+               durable: true,
+               exclusive: false,
+               autoDelete: false,
+               arguments: null);
 
             var message = GetMessage(args);
             for (int x = 1; x <= 50; x++)
@@ -27,7 +32,10 @@ namespace WorkQueuesSend
                var properties = channel.CreateBasicProperties();
                properties.Persistent = true;
 
-               channel.BasicPublish("", "task_queue", properties, body);
+               channel.BasicPublish(exchange: "",
+                  routingKey: "task_queue",
+                  basicProperties: properties,
+                  body: body);
             }
             Console.WriteLine(" [x] Sent {0}", message);
          }
